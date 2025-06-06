@@ -14,6 +14,10 @@ import (
 	util "github.com/brainplot/sqs-example"
 )
 
+func init() {
+	log.SetFlags(util.LogFlags)
+}
+
 func main() {
 	// Load environment variable
 	queueName := os.Getenv("SQS_QUEUE_NAME")
@@ -35,7 +39,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get queue URL: %v", err)
 	}
-	log.Printf("Sending messages to queue: %s\n", queueURL)
+	log.Printf("Sending to queue: %s\n", queueURL)
 
 	// Loop indefinitely sending random numbers
 	for {

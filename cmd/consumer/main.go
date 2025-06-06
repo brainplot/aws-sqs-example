@@ -13,6 +13,10 @@ import (
 	util "github.com/brainplot/sqs-example"
 )
 
+func init() {
+	log.SetFlags(util.LogFlags)
+}
+
 func main() {
 	// Load queue name from environment
 	queueName := os.Getenv("SQS_QUEUE_NAME")
@@ -33,36 +37,34 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get queue URL: %v", err)
 	}
-	log.Printf("Listening to queue: %s", queueURL)
+	log.Printf("Consuming queue: %s", queueURL)
 
 	// Poll every 5 seconds
 	for {
-		err := receiveMessages(context.TODO(), sqsClient, queueURL)
+		messages, err := receiveMessages(context.TODO(), sqsClient, queueURL)
 		if err != nil {
 			log.Printf("error receiving messages: %v", err)
 		}
+		fmt.Printf("%v\n", messages)
 		time.Sleep(5 * time.Second)
 	}
 }
 
-func receiveMessages(ctx context.Context, client *sqs.Client, queueURL string) error {
+func receiveMessages(ctx context.Context, client *sqs.Client, queueURL string) ([]string, error) {
 	out, err := client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 5,  // Adjust based on expected volume
-		WaitTimeSeconds:     10, // Long polling
+		MaxNumberOfMessages: 20, // Adjust based on expected volume
+		WaitTimeSeconds:     5,  // Long polling
 		VisibilityTimeout:   30, // Optional: time before message becomes visible again
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if len(out.Messages) == 0 {
-		log.Println("No messages received")
-		return nil
-	}
+	messages := make([]string, 0, 10)
 
 	for _, msg := range out.Messages {
-		fmt.Printf("Received: %s\n", *msg.Body)
+		messages = append(messages, *msg.Body)
 
 		// Delete the message after processing
 		_, err := client.DeleteMessage(ctx, &sqs.DeleteMessageInput{
@@ -76,5 +78,5 @@ func receiveMessages(ctx context.Context, client *sqs.Client, queueURL string) e
 		}
 	}
 
-	return nil
+	return messages, nil
 }
