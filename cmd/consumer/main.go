@@ -53,7 +53,7 @@ func main() {
 func receiveMessages(ctx context.Context, client *sqs.Client, queueURL string) ([]string, error) {
 	out, err := client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 20, // Adjust based on expected volume
+		MaxNumberOfMessages: 10, // Adjust based on expected volume
 		WaitTimeSeconds:     5,  // Long polling
 		VisibilityTimeout:   30, // Optional: time before message becomes visible again
 	})
